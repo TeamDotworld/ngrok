@@ -1,14 +1,17 @@
 package client
 
 import (
+	"context"
 	"fmt"
-	"github.com/inconshreveable/mousetrap"
 	"math/rand"
+	"net"
 	"ngrok/log"
 	"ngrok/util"
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/inconshreveable/mousetrap"
 )
 
 func init() {
@@ -20,9 +23,22 @@ func init() {
 			os.Exit(1)
 		}
 	}
+
 }
 
 func Main() {
+	var dialer net.Dialer
+	net.DefaultResolver = &net.Resolver{
+		PreferGo: false,
+		Dial: func(context context.Context, network, _ string) (net.Conn, error) {
+			conn, err := dialer.DialContext(context, network, "8.8.8.8:53")
+			if err != nil {
+				return nil, err
+			}
+			return conn, nil
+		},
+	}
+
 	// parse options
 	opts, err := ParseArgs()
 	if err != nil {
